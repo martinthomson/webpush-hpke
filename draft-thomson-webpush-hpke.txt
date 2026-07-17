@@ -3,12 +3,12 @@
 
 
 WG Working Group                                              Y. N. Here
-Internet-Draft                                    Your Organization Here
-Intended status: Informational                              17 July 2026
+Internet-Draft                                                   Mozilla
+Intended status: Standards Track                            17 July 2026
 Expires: 18 January 2027
 
 
-                           TODO - Your title
+                     WebPush Encryption using HPKE
                   draft-todo-yourname-protocol-latest
 
 Abstract
@@ -110,5 +110,5 @@ Acknowledgments
 Author's Address
 
    Your Name Here
-   Your Organization Here
+   Mozilla
    Email: your.email@example.com
