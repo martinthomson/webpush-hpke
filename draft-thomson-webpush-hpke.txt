@@ -4,7 +4,8 @@
 
 Web-Based Push Notifications                                  M. Thomson
 Internet-Draft                                                   Mozilla
-Intended status: Standards Track                            19 July 2026
+Obsoletes: 8291 (if approved)                               19 July 2026
+Intended status: Standards Track                                        
 Expires: 20 January 2027
 
 
@@ -15,6 +16,8 @@ Abstract
 
    This document defines how to use Hybrid Public Key Encryption (HPKE)
    with Web Push.
+
+   This document obsoletes RFC 8291.
 
 About This Document
 
@@ -74,13 +77,16 @@ Table of Contents
    5.  HPKE-Encrypted Push Message Format
      5.1.  Push Message Application Server Processing
      5.2.  Push Message Receiver Processing
-   6.  Security Considerations
-     6.1.  Denial of Service
-     6.2.  Web Push Encryption Proteus Ciphertext Attack
-   7.  IANA Considerations
-   8.  References
-     8.1.  Normative References
-     8.2.  Informative References
+   6.  Mandatory Algorithms
+   7.  Upgrading from RFC 8291
+   8.  Security Considerations
+     8.1.  Handling Denial of Service
+     8.2.  Multi-Target Ciphertexts in RFC 8291
+     8.3.  Media Type Security
+   9.  IANA Considerations
+   10. References
+     10.1.  Normative References
+     10.2.  Informative References
    Acknowledgments
    Author's Address
 
@@ -93,16 +99,18 @@ Table of Contents
    risk of this resulting in the compromise of Web Push encryption will
    be increasingly likely as time passes [PQC-GUIDE].
 
-   Rather than revise the design of Web Push message protection,
-   including a fresh design that integrates a post-quantum KEM, this
-   document defines a generic use of Hybrid Public Key Encryption (HPKE)
-   [HPKE].
+   This document defines a message encryption design that can integrate
+   a post-quantum KEM.  This design is a generic use of Hybrid Public
+   Key Encryption (HPKE) [HPKE] that can use any defined set of
+   algorithms.
 
    At the same time, the use of HPKE addresses a minor, but
    inconsequential, vulnerability in the design of [RFC8291] that would
    allow an application to construct a single ciphertext that two
    parties would successfully authenticate and decrypt to different
-   plaintexts.  This attack is described in Section 6.2.
+   plaintexts.  This attack is described in Section 8.2.
+
+   This document obsoletes RFC 8291 [RFC8291].
 
 2.  Conventions and Definitions
 
@@ -359,7 +367,43 @@ Table of Contents
    rctxt = SetupBaseR(enc, skR, info, psk, [key_id])
    msg, error = rctxt.Open("", ct)
 
-6.  Security Considerations
+6.  Mandatory Algorithms
+
+   All implementations of this specification MUST implement the
+   following algorithms:
+
+   *  the MLKEM768-X25519 KEM (0x647a) Section 8.2 of [HPKE-PQ]
+
+   *  the TurboSHAKE128 KDF (0x0012) Section 5 of [HPKE-PQ]
+
+   *  the AES-GCM AEAD (0x0001) Section 7.3 of [HPKE]
+
+7.  Upgrading from RFC 8291
+
+   The encryption scheme in [RFC8291] identifies itself through the use
+   of the encrypted "aes128gcm" content coding [RFC8188].  Though it is
+   possible to use this message encryption system and the "aes128gcm"
+   content coding, this is not generally necessary.  A user agent can
+   therefore use the absence of the encrypted content coding to indicate
+   the use of this scheme.
+
+   This document defines a media type for HPKE-protected push messages;
+   see Section 9.  This media type MAY be omitted.
+
+   The use of post-quantum cryptography can increase the size of
+   messages considerably.  Section 4 of [RFC8291] recommends that push
+   services support ciphertext of 4096 bytes.  This can reduce the
+   available space for plaintext considerably.  For example, using
+   MLKEM768-X25519 means 1143 bytes of cryptographic overhead, compared
+   to the 103-byte overhead in RFC 8291.
+
+   Ideally, to allow for a smooth transition to PQ cryptography, push
+   services would allow an additional 1kB for ciphertext.
+
+   Unlike RFC 8291, no native padding facility is provided by this
+   encryption format; see Section 8 for details.
+
+8.  Security Considerations
 
    A Web Push user agent relies to some degree on two values remaining
    confidential to protect it from unwanted messages:
@@ -390,7 +434,7 @@ Table of Contents
    replacing the encryption scheme.  Any replacement of this encryption
    scheme can use those same techniques.
 
-6.1.  Denial of Service
+8.1.  Handling Denial of Service
 
    A user agent that receives multiple unwanted messages, including
    messages that are discarded, might be the target of a denial of
@@ -401,31 +445,71 @@ Table of Contents
    A user agent can disable the associated subscription if they receive
    too many unwanted or invalid messages.
 
-6.2.  Web Push Encryption Proteus Ciphertext Attack
+8.2.  Multi-Target Ciphertexts in RFC 8291
 
-   In this attack, a malicious application can construct a single
-   ciphertext that will be decrypted successfully (that is, the AEAD tag
-   is accepted) but different recipients receive different plaintext.
+   RFC 8291 [RFC8192] is vulnerable to an attack where a malicious
+   application can construct a single ciphertext that will be decrypted
+   successfully (that is, the AEAD tag is accepted) by multiple
+   recipients, each of whom can receive a different plaintext.
 
    It is possible to apply the techniques from [CDJZ] to achieve this
-   outcome with the design in RFC 8291.  This has no practical
-   consequence, as it requires that the attacker have information that
-   would allow it to send any message without any need to a share a
-   ciphertext.
+   outcome with only modest amounts of computation.
 
-7.  IANA Considerations
+   This attack has no practical consequence, as it requires that the
+   attacker have information that would allow it to send any message
+   without any need to a share a ciphertext.
 
-   This document has no IANA actions.
+8.3.  Media Type Security
 
-8.  References
+   Push messages contain arbitrary content chosen by an application
+   server.  Though the format does not provide explicit signaling for
+   the encapsulated media type, applications can include arbitrary data.
+   How data is handled is determined by the application, which both
+   sends and receives the data.
 
-8.1.  Normative References
+9.  IANA Considerations
+
+   This document registers the "application/webpush-message" content
+   type to identify an HPKE-protected push message, as defined in
+   Section 5.
+
+   Type name:  application
+   Subtype name:  webpush-message
+   Required parameters:  N/A
+   Optional parameters:  N/A
+   Encoding considerations:  "binary"
+   Security considerations:  see Section 8.3
+   Interoperability considerations:  N/A
+   Published specification:  this specification
+   Applications that use this media type:  This type identifies an
+      encrypted web push message.
+   Fragment identifier considerations:  N/A
+   Additional information:  Magic number(s):  N/A
+                            Deprecated alias names for this type:  N/A
+                            File extension(s):  N/A
+                            Macintosh file type code(s):  N/A
+   Person and email address to contact for further information:  see
+      Authors' Addresses section
+   Intended usage:  COMMON
+   Restrictions on usage:  N/A
+   Author:  see Authors' Addresses section
+   Change controller:  IETF
+
+10.  References
+
+10.1.  Normative References
 
    [HPKE]     Barnes, R., Bhargavan, K., Lipp, B., and C. A. Wood,
               "Hybrid Public Key Encryption", Work in Progress,
               Internet-Draft, draft-ietf-hpke-hpke-04, 6 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-hpke-
               hpke-04>.
+
+   [HPKE-PQ]  Barnes, R. and D. Connolly, "Post-Quantum and Post-
+              Quantum/Traditional Hybrid Algorithms for HPKE", Work in
+              Progress, Internet-Draft, draft-ietf-hpke-pq-05, 6 July
+              2026, <https://datatracker.ietf.org/doc/html/draft-ietf-
+              hpke-pq-05>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -436,12 +520,16 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
+   [RFC8188]  Thomson, M., "Encrypted Content-Encoding for HTTP",
+              RFC 8188, DOI 10.17487/RFC8188, June 2017,
+              <https://www.rfc-editor.org/rfc/rfc8188>.
+
    [WEBPUSH]  Thomson, M., Damaggio, E., and B. Raymor, Ed., "Generic
               Event Delivery Using HTTP Push", RFC 8030,
               DOI 10.17487/RFC8030, December 2016,
               <https://www.rfc-editor.org/rfc/rfc8030>.
 
-8.2.  Informative References
+10.2.  Informative References
 
    [CDJZ]     Cremers, C., Dax, A., Jacomme, C., and M. Zhao, "Automated
               Analysis of Protocols that use Authenticated Encryption:
@@ -466,10 +554,6 @@ Table of Contents
               Multiplexed and Secure Transport", RFC 9000,
               DOI 10.17487/RFC9000, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9000>.
-
-   [RFC8188]  Thomson, M., "Encrypted Content-Encoding for HTTP",
-              RFC 8188, DOI 10.17487/RFC8188, June 2017,
-              <https://www.rfc-editor.org/rfc/rfc8188>.
 
    [RFC8192]  Hares, S., Lopez, D., Zarny, M., Jacquenet, C., Kumar, R.,
               and J. Jeong, "Interface to Network Security Functions
