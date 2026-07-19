@@ -5,6 +5,7 @@ category: std
 docname: draft-thomson-webpush-hpke-latest
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
 number:
+obsoletes: 8291
 date:
 consensus: true
 v: 3
@@ -50,6 +51,8 @@ informative:
 This document defines how to use Hybrid Public Key Encryption (HPKE)
 with Web Push.
 
+This document obsoletes RFC 8291.
+
 
 --- middle
 
@@ -64,10 +67,11 @@ is created.
 The risk of this resulting in the compromise of Web Push encryption
 will be increasingly likely as time passes {{?PQC-GUIDE=RFC9958}}.
 
-Rather than revise the design of Web Push message protection,
-including a fresh design that integrates a post-quantum KEM,
-this document defines a generic use
-of Hybrid Public Key Encryption (HPKE) {{!HPKE=I-D.ietf-hpke-hpke}}.
+This document defines a message encryption design
+that can integrate a post-quantum KEM.
+This design is a generic use
+of Hybrid Public Key Encryption (HPKE) {{!HPKE=I-D.ietf-hpke-hpke}}
+that can use any defined set of algorithms.
 
 At the same time, the use of HPKE addresses a minor, but inconsequential,
 vulnerability in the design of {{?RFC8291}}
@@ -76,10 +80,13 @@ that two parties would successfully authenticate
 and decrypt to different plaintexts.
 This attack is described in {{proteus}}.
 
+This document obsoletes RFC 8291 {{?RFC8291}}.
+
 
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
+
 
 # Using HPKE in Web Push
 
@@ -134,6 +141,7 @@ The overall encryption design is composed from two parts:
 2. A message protection format,
    used to encode push messages.
    This format is defined in {{message}}.
+
 
 # User Agent Key Configuration {#config}
 
@@ -254,6 +262,7 @@ following the guidance of {{Section 4.6 of OHTTP}},
 differing only in that it includes a pre-shared key.
 Processes for the application server
 
+
 ## Push Message Application Server Processing {#encrypt}
 
 Applications encapsulate a push message, `msg`,
@@ -315,6 +324,7 @@ ct = sctxt.Seal("", msg)
 push_message = concat(hdr, enc, ct)
 ~~~
 
+
 ## Push Message Receiver Processing {#decrypt}
 
 An user agent decrypts a push message by reversing this process.
@@ -364,7 +374,46 @@ rctxt = SetupBaseR(enc, skR, info, psk, [key_id])
 msg, error = rctxt.Open("", ct)
 ~~~
 
-# Security Considerations
+
+# Mandatory Algorithms {#algorithms}
+
+All implementations of this specification MUST implement
+the following algorithms:
+
+* the MLKEM768-X25519 KEM (0x647a) {{Section 8.2 of !HPKE-PQ=I-D.ietf-hpke-pq}}
+* the TurboSHAKE128 KDF (0x0012) {{Section 5 of !HPKE-PQ}}
+* the AES-GCM AEAD (0x0001) {{Section 7.3 of !HPKE}}
+
+
+# Upgrading from RFC 8291
+
+The encryption scheme in {{?RFC8291}} identifies itself
+through the use of the encrypted "aes128gcm" content coding {{!RFC8188}}.
+Though it is possible to use this message encryption system
+and the "aes128gcm" content coding,
+this is not generally necessary.
+A user agent can therefore use the absence of the encrypted content coding
+to indicate the use of this scheme.
+
+This document defines a media type
+for HPKE-protected push messages; see {{iana}}.
+This media type MAY be omitted.
+
+The use of post-quantum cryptography can increase the size of messages considerably.
+{{Section 4 of RFC8291}} recommends that push services support ciphertext
+of 4096 bytes.
+This can reduce the available space for plaintext considerably.
+For example, using MLKEM768-X25519 means 1143 bytes of cryptographic overhead,
+compared to the 103-byte overhead in RFC 8291.
+
+Ideally, to allow for a smooth transition to PQ cryptography,
+push services would allow an additional 1kB for ciphertext.
+
+Unlike RFC 8291, no native padding facility is provided by this encryption format;
+see {{security}} for details.
+
+
+# Security Considerations {#security}
 
 A Web Push user agent relies to some degree on two values
 remaining confidential to protect it from unwanted messages:
@@ -398,7 +447,8 @@ This document exercises the options described in {{?RFC8192}}
 for replacing the encryption scheme.
 Any replacement of this encryption scheme can use those same techniques.
 
-## Denial of Service {#dos}
+
+## Handling Denial of Service {#dos}
 
 A user agent that receives multiple unwanted messages,
 including messages that are discarded,
@@ -411,25 +461,108 @@ A user agent can disable the associated subscription
 if they receive too many unwanted or invalid messages.
 
 
-## Web Push Encryption Proteus Ciphertext Attack {#proteus}
+## Multi-Target Ciphertexts in RFC 8291 {#proteus}
 
-In this attack, a malicious application can construct a single ciphertext
+RFC 8291 {{?RFC8192}} is vulnerable to an attack
+where a malicious application can construct a single ciphertext
 that will be decrypted successfully
 (that is, the AEAD tag is accepted)
-but different recipients receive different plaintext.
+by multiple recipients,
+each of whom can receive a different plaintext.
 
 It is possible to apply the techniques from {{CDJZ}}
-to achieve this outcome with the design in RFC 8291.
-This has no practical consequence,
+to achieve this outcome with only modest amounts of computation.
+
+This attack has no practical consequence,
 as it requires that the attacker have information
 that would allow it to send any message
 without any need to a share a ciphertext.
 
 
-# IANA Considerations
+## Media Type Security {#sec-media}
 
-This document has no IANA actions.
+Push messages contain arbitrary content chosen by an application server.
+Though the format does not provide explicit signaling for the encapsulated media type,
+applications can include arbitrary data.
+How data is handled is determined by the application,
+which both sends and receives the data.
 
+
+# IANA Considerations {#iana}
+
+This document registers the "application/webpush-message" content type
+to identify an HPKE-protected push message,
+as defined in {{message}}.
+
+Type name:
+
+: application
+
+Subtype name:
+
+: webpush-message
+
+Required parameters:
+
+: N/A
+
+Optional parameters:
+
+: N/A
+
+Encoding considerations:
+
+: "binary"
+
+Security considerations:
+
+: see {{sec-media}}
+
+Interoperability considerations:
+
+: N/A
+
+Published specification:
+
+: this specification
+
+Applications that use this media type:
+
+: This type identifies an encrypted web push message.
+
+Fragment identifier considerations:
+
+: N/A
+
+Additional information:
+
+: <dl spacing="compact">
+  <dt>Magic number(s):</dt><dd>N/A</dd>
+  <dt>Deprecated alias names for this type:</dt><dd>N/A</dd>
+  <dt>File extension(s):</dt><dd>N/A</dd>
+  <dt>Macintosh file type code(s):</dt><dd>N/A</dd>
+  </dl>
+
+Person and email address to contact for further information:
+
+: see Authors' Addresses section
+
+Intended usage:
+
+: COMMON
+
+Restrictions on usage:
+
+: N/A
+
+Author:
+
+: see Authors' Addresses section
+
+Change controller:
+
+: IETF
+{: spacing="compact"}
 
 --- back
 
