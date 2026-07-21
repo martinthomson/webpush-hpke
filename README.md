@@ -1,19 +1,28 @@
 <!-- regenerate: on (set to off if you edit this file) -->
 
-# WebPush Encryption using HPKE
+# WEBPUSH Drafts
 
-This is the working area for the individual Internet-Draft, "WebPush Encryption using HPKE".
+This is the working area for individual Internet-Drafts.
 
-* [Editor's Copy](https://martinthomson.github.io/webpush-hpke/#go.draft-thomson-webpush-hpke.html)
+## WebPush Encryption using HPKE
+
+* [Editor's Copy](https://martinthomson.github.io/webpush-pq/#go.draft-thomson-webpush-hpke.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-thomson-webpush-hpke)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-thomson-webpush-hpke)
-* [Compare Editor's Copy to Individual Draft](https://martinthomson.github.io/webpush-hpke/#go.draft-thomson-webpush-hpke.diff)
+* [Compare Editor's Copy to Individual Draft](https://martinthomson.github.io/webpush-pq/#go.draft-thomson-webpush-hpke.diff)
+
+## WebPush Encryption using Symmetric Ciphers
+
+* [Editor's Copy](https://martinthomson.github.io/webpush-pq/#go.draft-thomson-webpush-sym.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-thomson-webpush-sym)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-thomson-webpush-sym)
+* [Compare Editor's Copy to Individual Draft](https://martinthomson.github.io/webpush-pq/#go.draft-thomson-webpush-sym.diff)
 
 
 ## Contributing
 
 See the
-[guidelines for contributions](https://github.com/martinthomson/webpush-hpke/blob/main/CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/martinthomson/webpush-pq/blob/main/CONTRIBUTING.md).
 
 The contributing file also has tips on how to make contributions, if you
 don't already know how to do that.
