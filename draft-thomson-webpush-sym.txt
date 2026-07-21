@@ -9,13 +9,13 @@ Intended status: Standards Track
 Expires: 22 January 2027
 
 
-                     WebPush Encryption using HPKE
-                   draft-thomson-webpush-hpke-latest
+               WebPush Encryption using Symmetric Ciphers
+                    draft-thomson-webpush-sym-latest
 
 Abstract
 
-   This document defines how to use Hybrid Public Key Encryption (HPKE)
-   with Web Push.
+   This document defines how to use purely symmetric cryptography with
+   Web Push.
 
    This document obsoletes RFC 8291.
 
@@ -26,7 +26,7 @@ About This Document
    The latest revision of this draft can be found at
    https://martinthomson.github.io/webpush-hpke/draft-thomson-webpush-
    hpke.html.  Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-thomson-webpush-hpke/.
+   https://datatracker.ietf.org/doc/draft-thomson-webpush-sym/.
 
    Discussion of this document takes place on the Web-Based Push
    Notifications Working Group mailing list (mailto:webpush@ietf.org),
@@ -80,9 +80,11 @@ Table of Contents
    6.  Mandatory Algorithms
    7.  Upgrading from RFC 8291
    8.  Security Considerations
-     8.1.  Handling Denial of Service
-     8.2.  Multi-Target Ciphertexts in RFC 8291
-     8.3.  Media Type Security
+     8.1.  Post-Compromise Security
+     8.2.  Nonce Collisions
+     8.3.  AEAD Overuse
+     8.4.  Handling Denial of Service
+     8.5.  Media Type Security
    9.  IANA Considerations
    10. References
      10.1.  Normative References
@@ -99,22 +101,16 @@ Table of Contents
    risk of this resulting in the compromise of Web Push encryption will
    be increasingly likely as time passes [PQC-GUIDE].
 
-   This document defines a message encryption design that can integrate
-   a post-quantum KEM.  This design is a generic use of Hybrid Public
-   Key Encryption (HPKE) [HPKE] that can use any defined set of
-   algorithms.
-
-   At the same time, the use of HPKE addresses a minor, but
-   inconsequential, vulnerability in the design of [RFC8291] that would
-   allow an application to construct a single ciphertext that two
-   parties would successfully authenticate and decrypt to different
-   plaintexts.  This attack is described in Section 8.2.
+   This document defines a message encryption design that uses purely
+   symmetric algorithms, relying on a pre-shared symmetric key.  This
+   relies on building a system for signaling updates to the pre-shared
+   key.  That system is not described in this document.
 
    This document obsoletes RFC 8291 [RFC8291].
 
-   This document is one of a pair.  Its companion, [WEBPUSH-SYM] is an
-   alternative to this approach.  [WEBPUSH-SYM] describes how to encode
-   messages using symmetric cryptography.
+   This document is one of a pair.  Its companion, [WEBPUSH-HPKE] is an
+   alternative to this approach.  [WEBPUSH-HPKE] describes how to encode
+   messages using Hybrid Public Key Encryption (HPKE).
 
 2.  Conventions and Definitions
 
@@ -158,7 +154,8 @@ Table of Contents
    Web Push uses a hybrid encryption mode that combines a key-
    encapsulation mechanism (KEM) and pre-shared key (PSK) with
    authenticated encryption with additional data (AEAD) encryption.
-   This document describes how this can be provided by [HPKE].
+   This document describes how this can be performed using purely
+   symmetric ciphers.
 
    The overall encryption design is composed from two parts:
 
@@ -173,105 +170,58 @@ Table of Contents
 
 4.  User Agent Key Configuration
 
-   In order for an application server to send a push message using HPKE,
-   it requires knowledge of:
+   In order for an application server to send a push message using these
+   keys, it requires knowledge of the PSK the user agent has chosen and
+   the corresponding cipher.
 
-   *  the HPKE algorithms that the user agent accepts,
-
-   *  the PSK the user agent has chosen, and
-
-   *  the KEM public key (or keys) the user agent holds secret keys for.
-
-   This information is formatted into a key configuration, similar in
-   shape to that used in the Encrypted Client Hello (ECH) HpkeKeyConfig
-   (Section 4 of [ECH]) or the Oblivious HTTP key configuration
-   (Section 3 of [OHTTP]).
+   This information is formatted into a key configuration.
 
    Figure 2 shows the format of the key configuration, using the format
    described in Section 1.3 of [QUIC].
 
    Key Config {
-     Key Config Item With Length (..) ...,
+     Symmetric Algorithms (32) ...,
    }
 
-   Key Config Item With Length {
-     Key Config Item Length (16),
-     Key Config Item (..),
-   }
-
-   Key Config Item {
+   Symmetric Key {
      Key Identifier (8),
-     PSK (128),
-     HPKE KEM ID (16),
-     HPKE Public Key (Npk * 8),
-     HPKE Symmetric Algorithms Length (16) = 4..65532,
-     HPKE Symmetric Algorithms (32) ...,
-   }
-
-   HPKE Symmetric Algorithms {
-     HPKE KDF ID (16),
      HPKE AEAD ID (16),
+     Key Length (16),
+     Key (Nk * 8),
    }
 
                        Figure 2: Configuration Format
 
-   The format consists of one or more Key Config Items, each prefixed
-   with a 16 bit length, in network byte order.
-
-   Each Key Config Item contains:
+   The format consists of one or more Symmetric Key items, each of which
+   contains:
 
    Key Identifier:  An 8 bit value that will be used in protected
       messages to identify the user agent's PSK and KEM secret key.
 
-   PSK:  A 16 byte sequence of bytes of the pre-shared key.
+   HPKE AEAD ID:  A 16 bit HPKE AEAD identifier as defined in
+      Section 7.3 of [HPKE] or the HPKE AEAD IANA registry
+      (https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-ids).
 
-   HPKE KEM ID:  A 16 bit value that identifies the Key Encapsulation
-      Method (KEM) used for the identified key as defined in Section 7.1
-      of [HPKE] or the HPKE KDF IANA registry
-      (https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kem-ids).
+   Key Length:  A 16 bit integer in network byte order that encodes the
+      length, in bytes, of the Key field that follows.
 
-   HPKE Public Key:  The public key used by the user agent.  The length
-      of the public key is Npk, which is determined by the choice of
-      HPKE KEM as defined in Section 4 of [HPKE].  (As a result,
-      knowledge of the KEM is necessary to process subsequent fields.)
-
-   HPKE Symmetric Algorithms Length:  A 16 bit integer in network byte
-      order that encodes the length, in bytes, of the HPKE Symmetric
-      Algorithms field that follows.
-
-   HPKE Symmetric Algorithms:  One or more pairs of identifiers for the
-      different combinations of HPKE KDF and AEAD that the user agent
-      supports:
-
-      HPKE KDF ID:  A 16 bit HPKE KDF identifier as defined in
-         Section 7.2 of [HPKE] or the HPKE KDF IANA registry
-         (https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kdf-
-         ids).
-
-      HPKE AEAD ID:  A 16 bit HPKE AEAD identifier as defined in
-         Section 7.3 of [HPKE] or the HPKE AEAD IANA registry
-         (https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-
-         ids).
+   Key:  A key for the identified AEAD, with a length determined by the
+      If the encoded length of the key is not identical to the size of
+      the key (Nk) in the definition of the AEAD, the entry MUST be
+      discarded.
 
 5.  HPKE-Encrypted Push Message Format
 
-   The format of push messages when using HPKE is illustrated in
-   Figure 3.
+   The format of push messages is illustrated in Figure 3.
 
    HPKE-Protected Push Message {
      Key Identifier (8),
-     HPKE KEM ID (16),
-     HPKE KDF ID (16),
-     HPKE AEAD ID (16),
-     Encapsulated KEM Shared Secret (8 * Nenc),
-     HPKE-Protected Message Contents (..),
+     Nonce (Nn),
+     Encrypted Message Contents (..),
    }
 
                 Figure 3: HPKE-Protected Push Message Format
 
-   This format is identical to that in Section 4.1 of [OHTTP] and it
-   uses a similar construction following the guidance of Section 4.6 of
-   [OHTTP], differing only in that it includes a pre-shared key.
    Processes for the application server that sends messages are included
    in Section 5.1; processes for the user agent that receives messages
    are included in Section 5.2.
@@ -282,107 +232,78 @@ Table of Contents
    key configuration:
 
    *  the key identifier from the configuration, key_id, with the
-      corresponding KEM identified by kem_id,
+      corresponding AEAD identified by aead_id, and
 
-   *  the pre-shared key from the configuration, psk,
-
-   *  the public key from the configuration, pkR, and
-
-   *  a combination of KDF, identified by kdf_id, and AEAD, identified
-      by aead_id, that the application selects from those in the key
-      configuration.
+   *  the pre-shared key from the configuration, key,
 
    The application then constructs an encrypted push message,
    push_message, from the plaintext of the message, msg, as follows:
 
-   1.  Construct a message header, hdr, by concatenating the values of
-       key_id, kem_id, kdf_id, and aead_id, as one 8-bit integer and
-       three 16-bit integers, respectively, each in network byte order.
+   1.  Generate a unique value for nonce.  This value needs to be unique
+       across all uses of the same pre-shared key.
 
-   2.  Build info by concatenating the ASCII-encoded string "webpush
-       message", a zero byte, and the header.
-
-   3.  Create a sending HPKE context by invoking SetupPSKS()
-       (Section 5.1.2 of [HPKE]) with the public key of the receiver
-       pkR, info as constructed, the pre-shared key psk, a single byte
-       pre-shared key identifier containing a single key_id.  This
-       yields the context sctxt and an encapsulation key enc.
-
-   4.  Encrypt msg by invoking the Seal() method on sctxt (Section 5.2
-       of [HPKE]) with empty associated data aad, yielding ciphertext
+   2.  Encrypt msg by invoking the Seal() method on the selected AEAD
+       passing key and an empty associated data aad, yielding ciphertext
        ct.
 
-   5.  Concatenate the values of hdr, enc, and ct, yielding an encrypted
-       push message push_message.
+   3.  Concatenate the values of key_id, nonce, and ct, yielding an
+       encrypted push message push_message.
 
-   Note that enc is of fixed-length, so there is no ambiguity in parsing
-   this structure.
+   Ideally, senders maintain a counter and use that for nonces.
+   However, coordinating a counter across multiple hosts can be
+   challenging.  For this reason, the value of nonce can be drawn at
+   random, in which case the number of messages that can be protected
+   with a single key MUST be significantly less than two to the power of
+   half the number of bits in the nonce value.  Setting a limit of
+   2^(Nn/2 - margin) messages, where margin is at least 20, provides a
+   very low chance of collision.
+
+   Note that nonce is of fixed-length, so there is no ambiguity in
+   parsing this structure.
 
    In pseudocode, this procedure is as follows:
 
-   hdr = concat(encode(1, key_id),
-                encode(2, kem_id),
-                encode(2, kdf_id),
-                encode(2, aead_id))
-   info = concat(encode_str("webpush message"),
-                 encode(1, 0),
-                 hdr)
-   enc, sctxt = SetupPSKS(pkR, info, psk, [key_id])
-   ct = sctxt.Seal("", msg)
-   push_message = concat(hdr, enc, ct)
+   aead = find_aead(aead_id)
+   nonce = random_bits(aead.Nn)
+   ct = aead.Seal(key, nonce, "", msg)
+   push_message = concat(key_id, nonce, ct)
 
 5.2.  Push Message Receiver Processing
 
    An user agent decrypts a push message by reversing this process.  To
    decapsulate the encrypted push message, push_message:
 
-   1.  Parses push_message into key_id, kem_id, kdf_id, aead_id, enc,
-       and ct (indicated using the function parse() in pseudocode).  The
-       user agent is then able to find the HPKE private key, skR, and
-       pre-shared key, psk.
+   1.  Parses push_message into key_id, nonce, and ct (indicated using
+       the function parse() in pseudocode).  The user agent is then able
+       to find the pre-shared key, key.
 
-       a.  If key_id does not identify a key matching the type of
-       kem_id, the user agent discards the message.
+       a.  If key_id does not identify a key known to the user agent the
+       user agent discards the message.
 
-       b.  If kdf_id and aead_id identify a combination of KDF and AEAD
-       that the user agent is unwilling to use with skR, the user agent
+       b.  Optionally, if nonce matches a value that has been used with
+       this key, the user agent destroys the corresponding key and
        discards the message.
 
-   2.  Build info by concatenating the ASCII-encoded string "message/
-       bhttp request", a zero byte, key_id as an 8-bit integer, plus
-       kem_id, kdf_id, and aead_id as three 16-bit integers.
-
-   3.  Create a receiving HPKE context, rctxt, by invoking SetupPSKR()
-       (Section 5.1.2 of [HPKE]) with enc, skR, info, psk, and a one
-       byte pre-shared key ID containing key_id.
-
-   4.  Decrypt ct by invoking the Open() method on rctxt (Section 5.2 of
-       [HPKE]), with an empty associated data aad, yielding msg or an
-       error on failure.  If an error is returned, the user agent
-       discards the message.
+   2.  Decrypt ct by invoking the Open() method on the AEAD associated
+       with the key, passing key, nonce, and an empty associated data,
+       yieldingmsg` or an error on failure.  If an error is returned,
+       the user agent discards the message.
 
    In pseudocode, this procedure is as follows:
 
-   key_id, kem_id, kdf_id, aead_id, enc, ct = parse(enc_request)
-   info = concat(encode_str("message/bhttp request"),
-                 encode(1, 0),
-                 encode(1, key_id),
-                 encode(2, kem_id),
-                 encode(2, kdf_id),
-                 encode(2, aead_id))
-   rctxt = SetupBaseR(enc, skR, info, psk, [key_id])
-   msg, error = rctxt.Open("", ct)
+   key_id, nonce, ct = parse(enc_request)
+   key, aead = find_key(key_id)
+   if not key: abort
+   if previously_seen(key_id, nonce):
+     delete(key)
+     abort
+   msg, error = aead.Open(key, "", nonce, ct)
+   if error: abort
 
 6.  Mandatory Algorithms
 
-   All implementations of this specification MUST implement the
-   following algorithms:
-
-   *  the MLKEM768-X25519 KEM (0x647a) Section 8.2 of [HPKE-PQ]
-
-   *  the TurboSHAKE128 KDF (0x0012) Section 5 of [HPKE-PQ]
-
-   *  the AES-GCM AEAD (0x0001) Section 7.3 of [HPKE]
+   All implementations of this specification MUST implement AES-128-GCM,
+   identified as 0x0001 in Section 7.3 of [HPKE].
 
 7.  Upgrading from RFC 8291
 
@@ -396,6 +317,16 @@ Table of Contents
    This document defines a media type for HPKE-protected push messages;
    see Section 9.  This media type MAY be omitted if the "aes128gcm"
    content coding is not present.
+
+   The use of post-quantum cryptography can increase the size of
+   messages considerably.  Section 4 of [RFC8291] recommends that push
+   services support ciphertext of 4096 bytes.  This can reduce the
+   available space for plaintext considerably.  For example, using
+   MLKEM768-X25519 means 1143 bytes of cryptographic overhead, compared
+   to the 103-byte overhead in RFC 8291.
+
+   Ideally, to allow for a smooth transition to PQ cryptography, push
+   services would allow an additional 1kB for ciphertext.
 
    Unlike RFC 8291, no native padding facility is provided by this
    encryption format; see Section 8 for details.
@@ -431,7 +362,42 @@ Table of Contents
    replacing the encryption scheme.  Any replacement of this encryption
    scheme can use those same techniques.
 
-8.1.  Handling Denial of Service
+8.1.  Post-Compromise Security
+
+   This message encryption scheme does not provide confidentiality of
+   messages that are sent after a key becomes compromised.  A key
+   compromise leads to loss of confidentiality for all messages sent
+   under the same key, in the past or future.  Knowledge of the key also
+   grants the ability to forge arbitrary new messages.
+
+8.2.  Nonce Collisions
+
+   Protection of two different messages with an identical nonce leads to
+   a key compromise in many AEAD functions.  Applications MUST ensure
+   that nonces used with the same key are unique.
+
+   This document does not require that user agents track which nonces
+   have been used, as that require significant state retention and
+   computation.  However, where a user agent detects nonce reuse it MUST
+   discard the associated key.  Messages that are merely replayed MUST
+   NOT trigger this response.  The user agent is encouraged to make all
+   affected entities aware of the (potential) compromise of both
+   previous and subsequent communications.
+
+   This document does not require the use of a nonce-reuse resistant
+   AEAD, but one might be defined based on something like [AES-GCM-SIV].
+
+8.3.  AEAD Overuse
+
+   Overuse of an AEAD key can give an attacker additional advantages
+   that might lead to loss of confidentiality or the ability to forge
+   messages.  The guidance in [AEAD-LIMITS] MUST be followed with a
+   target AEA advantage of 2^-40, assuming that all messages are 4096
+   bytes.  Application servers MUST refuse to send messages beyond the
+   corresponding limits; user agents MUST discard keys after receiving
+   that many messages.
+
+8.4.  Handling Denial of Service
 
    A user agent that receives multiple unwanted messages, including
    messages that are discarded, might be the target of a denial of
@@ -442,22 +408,7 @@ Table of Contents
    A user agent can disable the associated subscription if they receive
    too many unwanted or invalid messages.
 
-8.2.  Multi-Target Ciphertexts in RFC 8291
-
-   RFC 8291 [RFC8192] is vulnerable to an attack where a malicious
-   application can construct a single ciphertext that will be decrypted
-   successfully (that is, the AEAD tag is accepted) by multiple
-   recipients, each of whom can receive a different plaintext.
-
-   This format is also vulnerable to this attack.It is possible to apply
-   the techniques from [CDJZ] to achieve this outcome with only modest
-   amounts of computation.
-
-   This attack has no practical consequence, as it requires that the
-   attacker have information that would allow it to send any message
-   without any need to a share a ciphertext.
-
-8.3.  Media Type Security
+8.5.  Media Type Security
 
    Push messages contain arbitrary content chosen by an application
    server.  Though the format does not provide explicit signaling for
@@ -476,7 +427,7 @@ Table of Contents
    Required parameters:  N/A
    Optional parameters:  N/A
    Encoding considerations:  "binary"
-   Security considerations:  see Section 8.3
+   Security considerations:  see Section 8.5
    Interoperability considerations:  N/A
    Published specification:  this specification
    Applications that use this media type:  This type identifies an
@@ -497,17 +448,18 @@ Table of Contents
 
 10.1.  Normative References
 
+   [AEAD-LIMITS]
+              Günther, F., Thomson, M., and C. A. Wood, "Usage Limits on
+              AEAD Algorithms", Work in Progress, Internet-Draft, draft-
+              irtf-cfrg-aead-limits-11, 4 December 2025,
+              <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-
+              aead-limits-11>.
+
    [HPKE]     Barnes, R., Bhargavan, K., Lipp, B., and C. A. Wood,
               "Hybrid Public Key Encryption", Work in Progress,
               Internet-Draft, draft-ietf-hpke-hpke-04, 6 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-hpke-
               hpke-04>.
-
-   [HPKE-PQ]  Barnes, R. and D. Connolly, "Post-Quantum and Post-
-              Quantum/Traditional Hybrid Algorithms for HPKE", Work in
-              Progress, Internet-Draft, draft-ietf-hpke-pq-05, 6 July
-              2026, <https://datatracker.ietf.org/doc/html/draft-ietf-
-              hpke-pq-05>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -529,18 +481,16 @@ Table of Contents
 
 10.2.  Informative References
 
+   [AES-GCM-SIV]
+              Gueron, S., Langley, A., and Y. Lindell, "AES-GCM-SIV:
+              Nonce Misuse-Resistant Authenticated Encryption",
+              RFC 8452, DOI 10.17487/RFC8452, April 2019,
+              <https://www.rfc-editor.org/rfc/rfc8452>.
+
    [CDJZ]     Cremers, C., Dax, A., Jacomme, C., and M. Zhao, "Automated
               Analysis of Protocols that use Authenticated Encryption:
               How Subtle AEAD Differences can impact Protocol Security",
               USENIX 2023, August 2023.
-
-   [ECH]      Rescorla, E., Oku, K., Sullivan, N., and C. A. Wood, "TLS
-              Encrypted Client Hello", RFC 9849, DOI 10.17487/RFC9849,
-              March 2026, <https://www.rfc-editor.org/rfc/rfc9849>.
-
-   [OHTTP]    Thomson, M. and C. A. Wood, "Oblivious HTTP", RFC 9458,
-              DOI 10.17487/RFC9458, January 2024,
-              <https://www.rfc-editor.org/rfc/rfc9458>.
 
    [PQC-GUIDE]
               Banerjee, A., Reddy.K, T., Schoinianakis, D., Hollebeek,
@@ -563,13 +513,15 @@ Table of Contents
               DOI 10.17487/RFC8291, November 2017,
               <https://www.rfc-editor.org/rfc/rfc8291>.
 
-   [WEBPUSH-SYM]
-              Thomson, M., "WebPush Encryption using Symmetric Ciphers",
-              July 2026.
+   [WEBPUSH-HPKE]
+              Thomson, M., "WebPush Encryption using HPKE", July 2026.
 
 Acknowledgments
 
-   TODO
+   David Benjamin insisted that we attempt to use symmetric keys.  This
+   is because introducing a scheme that provides post-compromise
+   security, such as the one in [WEBPUSH-HPKE] is somewhat more
+   inefficient than this scheme.
 
 Author's Address
 

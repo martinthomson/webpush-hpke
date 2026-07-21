@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>WebPush Encryption using HPKE</title>
+<title>WebPush Encryption using Symmetric Ciphers</title>
 <meta content="Martin Thomson" name="author">
 <meta content="
-       This document defines how to use Hybrid Public Key Encryption (HPKE)
+       This document defines how to use purely symmetric cryptography
 with Web Push. 
        This document obsoletes RFC 8291. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="spam" name="keyword">
 <meta content="transdimensional annoyance" name="keyword">
-<meta content="draft-thomson-webpush-hpke-latest" name="ietf.draft">
+<meta content="perfect forward secrecy" name="keyword">
+<meta content="draft-thomson-webpush-sym-latest" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
     Python 3.14.5
@@ -30,7 +31,7 @@ with Web Push.
     requests 2.33.1
     wcwidth 0.8.2
 -->
-<link href="draft-thomson-webpush-hpke.xml" rel="alternate" type="application/rfc+xml">
+<link href="draft-thomson-webpush-sym.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
 <style type="text/css">@font-face {
   font-family: 'Lora';
@@ -1046,7 +1047,7 @@ svg {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">WebPush Encryption using HPKE</td>
+<td class="center">WebPush Encryption using Symmetric Ciphe</td>
 <td class="right">July 2026</td>
 </tr></thead>
 <tfoot><tr>
@@ -1061,7 +1062,7 @@ svg {
 <dt class="label-workgroup">Workgroup:</dt>
 <dd class="workgroup">Web-Based Push Notifications</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
-<dd class="internet-draft">draft-thomson-webpush-hpke-latest</dd>
+<dd class="internet-draft">draft-thomson-webpush-sym-latest</dd>
 <dt class="label-obsoletes">Obsoletes:</dt>
 <dd class="obsoletes">
 <a href="https://www.rfc-editor.org/rfc/rfc8291" class="eref">8291</a> (if approved)</dd>
@@ -1082,10 +1083,10 @@ svg {
 </dd>
 </dl>
 </div>
-<h1 id="title">WebPush Encryption using HPKE</h1>
+<h1 id="title">WebPush Encryption using Symmetric Ciphers</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines how to use Hybrid Public Key Encryption (HPKE)
+<p id="section-abstract-1">This document defines how to use purely symmetric cryptography
 with Web Push.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">This document obsoletes RFC 8291.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
@@ -1096,7 +1097,7 @@ with Web Push.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
 <p id="section-note.1-2">
         The latest revision of this draft can be found at <span><a href="https://martinthomson.github.io/webpush-hpke/draft-thomson-webpush-hpke.html">https://martinthomson.github.io/webpush-hpke/draft-thomson-webpush-hpke.html</a></span>.
-        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-thomson-webpush-hpke/">https://datatracker.ietf.org/doc/draft-thomson-webpush-hpke/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-thomson-webpush-sym/">https://datatracker.ietf.org/doc/draft-thomson-webpush-sym/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
 <p id="section-note.1-3">
         Discussion of this document takes place on the
         Web-Based Push Notifications Working Group mailing list (<span><a href="mailto:webpush@ietf.org">mailto:webpush@ietf.org</a></span>),
@@ -1186,13 +1187,19 @@ with Web Push.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-handling-denial-of-service" class="internal xref">Handling Denial of Service</a></p>
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-post-compromise-security" class="internal xref">Post-Compromise Security</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-multi-target-ciphertexts-in" class="internal xref">Multi-Target Ciphertexts in RFC 8291</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-nonce-collisions" class="internal xref">Nonce Collisions</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-media-type-security" class="internal xref">Media Type Security</a></p>
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-aead-overuse" class="internal xref">AEAD Overuse</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4">
+                <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-handling-denial-of-service" class="internal xref">Handling Denial of Service</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.5">
+                <p id="section-toc.1-1.8.2.5.1"><a href="#section-8.5" class="auto internal xref">8.5</a>.  <a href="#name-media-type-security" class="internal xref">Media Type Security</a></p>
 </li>
             </ul>
 </li>
@@ -1234,21 +1241,16 @@ is created.
 The risk of this resulting in the compromise of Web Push encryption
 will be increasingly likely as time passes <span>[<a href="#PQC-GUIDE" class="cite xref">PQC-GUIDE</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">This document defines a message encryption design
-that can integrate a post-quantum KEM.
-This design is a generic use
-of Hybrid Public Key Encryption (HPKE) <span>[<a href="#HPKE" class="cite xref">HPKE</a>]</span>
-that can use any defined set of algorithms.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">At the same time, the use of HPKE addresses a minor, but inconsequential,
-vulnerability in the design of <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>
-that would allow an application to construct a single ciphertext
-that two parties would successfully authenticate
-and decrypt to different plaintexts.
-This attack is described in <a href="#proteus" class="auto internal xref">Section 8.2</a>.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">This document obsoletes RFC 8291 <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">This document is one of a pair.
-Its companion, <span>[<a href="#WEBPUSH-SYM" class="cite xref">WEBPUSH-SYM</a>]</span> is an alternative to this approach.
-<span>[<a href="#WEBPUSH-SYM" class="cite xref">WEBPUSH-SYM</a>]</span> describes how to encode messages
-using symmetric cryptography.<a href="#section-1-5" class="pilcrow">¶</a></p>
+that uses purely symmetric algorithms,
+relying on a pre-shared symmetric key.
+This relies on building a system for signaling
+updates to the pre-shared key.
+That system is not described in this document.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This document obsoletes RFC 8291 <span>[<a href="#RFC8291" class="cite xref">RFC8291</a>]</span>.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">This document is one of a pair.
+Its companion, <span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span> is an alternative to this approach.
+<span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span> describes how to encode messages
+using Hybrid Public Key Encryption (HPKE).<a href="#section-1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1336,7 +1338,7 @@ is unable to read or alter the messages it handles.<a href="#section-3-4" class=
 a key-encapsulation mechanism (KEM)
 and pre-shared key (PSK)
 with authenticated encryption with additional data (AEAD) encryption.
-This document describes how this can be provided by <span>[<a href="#HPKE" class="cite xref">HPKE</a>]</span>.<a href="#section-3-5" class="pilcrow">¶</a></p>
+This document describes how this can be performed using purely symmetric ciphers.<a href="#section-3-5" class="pilcrow">¶</a></p>
 <p id="section-3-6">The overall encryption design is composed from two parts:<a href="#section-3-6" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-3-7">
 <li id="section-3-7.1">
@@ -1361,50 +1363,25 @@ This format is defined in <a href="#message" class="auto internal xref">Section 
       <h2 id="name-user-agent-key-configuratio">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-user-agent-key-configuratio" class="section-name selfRef">User Agent Key Configuration</a>
       </h2>
-<p id="section-4-1">In order for an application server to send a push message using HPKE,
-it requires knowledge of:<a href="#section-4-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-4-2.1">
-          <p id="section-4-2.1.1">the HPKE algorithms that the user agent accepts,<a href="#section-4-2.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-2.2">
-          <p id="section-4-2.2.1">the PSK the user agent has chosen, and<a href="#section-4-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-2.3">
-          <p id="section-4-2.3.1">the KEM public key (or keys) the user agent holds secret keys for.<a href="#section-4-2.3.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-4-3">This information is formatted into a key configuration,
-similar in shape to that used in
-the Encrypted Client Hello (ECH) <code>HpkeKeyConfig</code> (<span><a href="https://rfc-editor.org/rfc/rfc9849#section-4" class="relref">Section 4</a> of [<a href="#ECH" class="cite xref">ECH</a>]</span>)
-or the Oblivious HTTP key configuration (<span><a href="https://rfc-editor.org/rfc/rfc9458#section-3" class="relref">Section 3</a> of [<a href="#OHTTP" class="cite xref">OHTTP</a>]</span>).<a href="#section-4-3" class="pilcrow">¶</a></p>
-<p id="section-4-4"><a href="#f-config" class="auto internal xref">Figure 2</a> shows the format of the key configuration,
-using the format described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-1.3" class="relref">Section 1.3</a> of [<a href="#QUIC" class="cite xref">QUIC</a>]</span>.<a href="#section-4-4" class="pilcrow">¶</a></p>
+<p id="section-4-1">In order for an application server to send a push message using these keys,
+it requires knowledge of the PSK the user agent has chosen
+and the corresponding cipher.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">This information is formatted into a key configuration.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3"><a href="#f-config" class="auto internal xref">Figure 2</a> shows the format of the key configuration,
+using the format described in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-1.3" class="relref">Section 1.3</a> of [<a href="#QUIC" class="cite xref">QUIC</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
 <span id="name-configuration-format"></span><div id="f-config">
 <figure id="figure-2">
-        <div class="lang-artwork sourcecode" id="section-4-5.1">
+        <div class="lang-artwork sourcecode" id="section-4-4.1">
 <pre>
 Key Config {
-  Key Config Item With Length (..) ...,
+  Symmetric Algorithms (32) ...,
 }
 
-Key Config Item With Length {
-  Key Config Item Length (16),
-  Key Config Item (..),
-}
-
-Key Config Item {
+Symmetric Key {
   Key Identifier (8),
-  PSK (128),
-  HPKE KEM ID (16),
-  HPKE Public Key (Npk * 8),
-  HPKE Symmetric Algorithms Length (16) = 4..65532,
-  HPKE Symmetric Algorithms (32) ...,
-}
-
-HPKE Symmetric Algorithms {
-  HPKE KDF ID (16),
   HPKE AEAD ID (16),
+  Key Length (16),
+  Key (Nk * 8),
 }
 </pre>
 </div>
@@ -1412,64 +1389,34 @@ HPKE Symmetric Algorithms {
 <a href="#name-configuration-format" class="selfRef">Configuration Format</a>
         </figcaption></figure>
 </div>
-<p id="section-4-6">The format consists of one or more Key Config Items,
-each prefixed with a 16 bit length, in network byte order.<a href="#section-4-6" class="pilcrow">¶</a></p>
-<p id="section-4-7">Each Key Config Item contains:<a href="#section-4-7" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-4-8">
-        <dt id="section-4-8.1">Key Identifier:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.2">
-          <p id="section-4-8.2.1">An 8 bit value that will be used in protected messages
-to identify the user agent's PSK and KEM secret key.<a href="#section-4-8.2.1" class="pilcrow">¶</a></p>
+<p id="section-4-5">The format consists of one or more Symmetric Key items,
+each of which contains:<a href="#section-4-5" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-4-6">
+        <dt id="section-4-6.1">Key Identifier:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-6.2">
+          <p id="section-4-6.2.1">An 8 bit value that will be used in protected messages
+to identify the user agent's PSK and KEM secret key.<a href="#section-4-6.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-4-8.3">PSK:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.4">
-          <p id="section-4-8.4.1">A 16 byte sequence of bytes of the pre-shared key.<a href="#section-4-8.4.1" class="pilcrow">¶</a></p>
+<dt id="section-4-6.3">HPKE AEAD ID:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-6.4">
+          <p id="section-4-6.4.1">A 16 bit HPKE AEAD identifier as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.3" class="relref">Section 7.3</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>
+or <a href="https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-ids">the HPKE AEAD IANA registry</a>.<a href="#section-4-6.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-4-8.5">HPKE KEM ID:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.6">
-          <p id="section-4-8.6.1">A 16 bit value that identifies the Key Encapsulation Method (KEM)
-used for the identified key
-as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.1" class="relref">Section 7.1</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>
-or <a href="https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kem-ids">the HPKE KDF IANA registry</a>.<a href="#section-4-8.6.1" class="pilcrow">¶</a></p>
+<dt id="section-4-6.5">Key Length:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-6.6">
+          <p id="section-4-6.6.1">A 16 bit integer in network byte order that encodes the length, in bytes,
+of the Key field that follows.<a href="#section-4-6.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="section-4-8.7">HPKE Public Key:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.8">
-          <p id="section-4-8.8.1">The public key used by the user agent.
-The length of the public key is <code>Npk</code>,
-which is determined by the choice of HPKE KEM
-as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-4" class="relref">Section 4</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>.
-(As a result, knowledge of the KEM is necessary
-to process subsequent fields.)<a href="#section-4-8.8.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-4-8.9">HPKE Symmetric Algorithms Length:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.10">
-          <p id="section-4-8.10.1">A 16 bit integer in network byte order that encodes the length, in bytes,
-of the HPKE Symmetric Algorithms field that follows.<a href="#section-4-8.10.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-<dt id="section-4-8.11">HPKE Symmetric Algorithms:</dt>
-        <dd style="margin-left: 1.5em" id="section-4-8.12">
-          <p id="section-4-8.12.1">One or more pairs of identifiers for the different combinations
-of HPKE KDF and AEAD
-that the user agent supports:<a href="#section-4-8.12.1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-4-8.12.2">
-            <dt id="section-4-8.12.2.1">HPKE KDF ID:</dt>
-            <dd style="margin-left: 1.5em" id="section-4-8.12.2.2">
-              <p id="section-4-8.12.2.2.1">A 16 bit HPKE KDF identifier as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.2" class="relref">Section 7.2</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>
-or <a href="https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-kdf-ids">the HPKE KDF IANA registry</a>.<a href="#section-4-8.12.2.2.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-4-8.12.2.3">HPKE AEAD ID:</dt>
-            <dd style="margin-left: 1.5em" id="section-4-8.12.2.4">
-              <p id="section-4-8.12.2.4.1">A 16 bit HPKE AEAD identifier as defined in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.3" class="relref">Section 7.3</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>
-or <a href="https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-ids">the HPKE AEAD IANA registry</a>.<a href="#section-4-8.12.2.4.1" class="pilcrow">¶</a></p>
-</dd>
-          <dd class="break"></dd>
-</dl>
+<dt id="section-4-6.7">Key:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-6.8">
+          <p id="section-4-6.8.1">A key for the identified AEAD,
+with a length determined by the
+If the encoded length of the key is not identical to the size of the key (Nk)
+in the definition of the AEAD,
+the entry <span class="bcp14">MUST</span> be discarded.<a href="#section-4-6.8.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1480,18 +1427,15 @@ or <a href="https://www.iana.org/assignments/hpke/hpke.xhtml#hpke-aead-ids">the 
       <h2 id="name-hpke-encrypted-push-message">
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-hpke-encrypted-push-message" class="section-name selfRef">HPKE-Encrypted Push Message Format</a>
       </h2>
-<p id="section-5-1">The format of push messages when using HPKE is illustrated in <a href="#f-message" class="auto internal xref">Figure 3</a>.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">The format of push messages is illustrated in <a href="#f-message" class="auto internal xref">Figure 3</a>.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <span id="name-hpke-protected-push-message"></span><div id="f-message">
 <figure id="figure-3">
         <div class="lang-artwork sourcecode" id="section-5-2.1">
 <pre>
 HPKE-Protected Push Message {
   Key Identifier (8),
-  HPKE KEM ID (16),
-  HPKE KDF ID (16),
-  HPKE AEAD ID (16),
-  Encapsulated KEM Shared Secret (8 * Nenc),
-  HPKE-Protected Message Contents (..),
+  Nonce (Nn),
+  Encrypted Message Contents (..),
 }
 </pre>
 </div>
@@ -1499,11 +1443,7 @@ HPKE-Protected Push Message {
 <a href="#name-hpke-protected-push-message" class="selfRef">HPKE-Protected Push Message Format</a>
         </figcaption></figure>
 </div>
-<p id="section-5-3">This format is identical to that in <span><a href="https://rfc-editor.org/rfc/rfc9458#section-4.1" class="relref">Section 4.1</a> of [<a href="#OHTTP" class="cite xref">OHTTP</a>]</span>
-and it uses a similar construction
-following the guidance of <span><a href="https://rfc-editor.org/rfc/rfc9458#section-4.6" class="relref">Section 4.6</a> of [<a href="#OHTTP" class="cite xref">OHTTP</a>]</span>,
-differing only in that it includes a pre-shared key.
-Processes for the application server that sends messages
+<p id="section-5-3">Processes for the application server that sends messages
 are included in <a href="#encrypt" class="auto internal xref">Section 5.1</a>;
 processes for the user agent that receives messages
 are included in <a href="#decrypt" class="auto internal xref">Section 5.2</a>.<a href="#section-5-3" class="pilcrow">¶</a></p>
@@ -1517,69 +1457,50 @@ using values from the key configuration:<a href="#section-5.1-1" class="pilcrow"
 <ul class="normal">
 <li class="normal" id="section-5.1-2.1">
             <p id="section-5.1-2.1.1">the key identifier from the configuration, <code>key_id</code>,
-with the corresponding KEM identified by <code>kem_id</code>,<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
+with the corresponding AEAD identified by <code>aead_id</code>, and<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.2">
-            <p id="section-5.1-2.2.1">the pre-shared key from the configuration, <code>psk</code>,<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.1-2.3">
-            <p id="section-5.1-2.3.1">the public key from the configuration, <code>pkR</code>, and<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.1-2.4">
-            <p id="section-5.1-2.4.1">a combination of KDF, identified by <code>kdf_id</code>,
-and AEAD, identified by <code>aead_id</code>,
-that the application selects from those in the key configuration.<a href="#section-5.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.2.1">the pre-shared key from the configuration, <code>key</code>,<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-5.1-3">The application then constructs an encrypted push message, <code>push_message</code>,
 from the plaintext of the message, <code>msg</code>, as follows:<a href="#section-5.1-3" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.1-4">
 <li id="section-5.1-4.1">
-            <p id="section-5.1-4.1.1">Construct a message header, <code>hdr</code>, by concatenating the values of <code>key_id</code>,
-<code>kem_id</code>, <code>kdf_id</code>, and <code>aead_id</code>, as one 8-bit integer and three 16-bit
-integers, respectively, each in network byte order.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.1.1">Generate a unique value for <code>nonce</code>.
+This value needs to be unique across all uses
+of the same pre-shared key.<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.1-4.2">
-            <p id="section-5.1-4.2.1">Build <code>info</code> by concatenating the ASCII-encoded string "webpush message",
-a zero byte,
-and the header.<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.2.1">Encrypt <code>msg</code> by invoking the <code>Seal()</code> method on the selected AEAD
+passing <code>key</code> and an empty associated data <code>aad</code>,
+yielding ciphertext <code>ct</code>.<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.1-4.3">
-            <p id="section-5.1-4.3.1">Create a sending HPKE context by invoking <code>SetupPSKS()</code>
-(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-5.1.2" class="relref">Section 5.1.2</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>)
-with the public key of the receiver <code>pkR</code>,
-<code>info</code> as constructed,
-the pre-shared key <code>psk</code>,
-a single byte pre-shared key identifier containing a single <code>key_id</code>.
-This yields the context <code>sctxt</code> and an encapsulation key <code>enc</code>.<a href="#section-5.1-4.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-5.1-4.4">
-            <p id="section-5.1-4.4.1">Encrypt <code>msg</code> by invoking the <code>Seal()</code> method on <code>sctxt</code>
-(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-5.2" class="relref">Section 5.2</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>)
-with empty associated data <code>aad</code>,
-yielding ciphertext <code>ct</code>.<a href="#section-5.1-4.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-5.1-4.5">
-            <p id="section-5.1-4.5.1">Concatenate the values of <code>hdr</code>, <code>enc</code>, and <code>ct</code>,
-yielding an encrypted push message <code>push_message</code>.<a href="#section-5.1-4.5.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.3.1">Concatenate the values of <code>key_id</code>, <code>nonce</code>, and <code>ct</code>,
+yielding an encrypted push message <code>push_message</code>.<a href="#section-5.1-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.1-5">Note that <code>enc</code> is of fixed-length, so there is no ambiguity in parsing this
-structure.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.1-6">In pseudocode, this procedure is as follows:<a href="#section-5.1-6" class="pilcrow">¶</a></p>
-<div class="lang-pseudocode sourcecode" id="section-5.1-7">
+<p id="section-5.1-5">Ideally, senders maintain a counter and use that for nonces.
+However, coordinating a counter across multiple hosts
+can be challenging.
+For this reason, the value of <code>nonce</code> can be drawn at random,
+in which case the number of messages that can be protected
+with a single key <span class="bcp14">MUST</span> be significantly less than
+two to the power of half the number of bits in the <code>nonce</code> value.
+Setting a limit of 2<sup>Nn/2 - margin</sup> messages,
+where <code>margin</code> is at least 20,
+provides a very low chance of collision.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+<p id="section-5.1-6">Note that <code>nonce</code> is of fixed-length, so there is no ambiguity in parsing this
+structure.<a href="#section-5.1-6" class="pilcrow">¶</a></p>
+<p id="section-5.1-7">In pseudocode, this procedure is as follows:<a href="#section-5.1-7" class="pilcrow">¶</a></p>
+<div class="lang-pseudocode sourcecode" id="section-5.1-8">
 <pre>
-hdr = concat(encode(1, key_id),
-             encode(2, kem_id),
-             encode(2, kdf_id),
-             encode(2, aead_id))
-info = concat(encode_str("webpush message"),
-              encode(1, 0),
-              hdr)
-enc, sctxt = SetupPSKS(pkR, info, psk, [key_id])
-ct = sctxt.Seal("", msg)
-push_message = concat(hdr, enc, ct)
-</pre><a href="#section-5.1-7" class="pilcrow">¶</a>
+aead = find_aead(aead_id)
+nonce = random_bits(aead.Nn)
+ct = aead.Seal(key, nonce, "", msg)
+push_message = concat(key_id, nonce, ct)
+</pre><a href="#section-5.1-8" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -1593,50 +1514,37 @@ To decapsulate the encrypted push message, <code>push_message</code>:<a href="#s
 <ol start="1" type="1" class="normal type-1" id="section-5.2-2">
 <li id="section-5.2-2.1">
             <p id="section-5.2-2.1.1">Parses <code>push_message</code>
-into <code>key_id</code>, <code>kem_id</code>, <code>kdf_id</code>, <code>aead_id</code>, <code>enc</code>, and <code>ct</code>
+into <code>key_id</code>, <code>nonce</code>, and <code>ct</code>
 (indicated using the function <code>parse()</code> in pseudocode).
 The user agent is then able to find
-the HPKE private key, <code>skR</code>,
-and pre-shared key, <code>psk</code>.<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
+the pre-shared key, <code>key</code>.<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
 <p id="section-5.2-2.1.2">
-a. If <code>key_id</code> does not identify a key matching the type of <code>kem_id</code>,
+a. If <code>key_id</code> does not identify a key known to the user agent
    the user agent discards the message.<a href="#section-5.2-2.1.2" class="pilcrow">¶</a></p>
 <p id="section-5.2-2.1.3">
-b. If <code>kdf_id</code> and <code>aead_id</code> identify a combination of KDF and AEAD
-   that the user agent is unwilling to use with <code>skR</code>,
-   the user agent discards the message.<a href="#section-5.2-2.1.3" class="pilcrow">¶</a></p>
+b. Optionally, if <code>nonce</code> matches a value that has been used with this key,
+   the user agent destroys the corresponding key
+   and discards the message.<a href="#section-5.2-2.1.3" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.2-2.2">
-            <p id="section-5.2-2.2.1">Build <code>info</code> by concatenating the ASCII-encoded string "message/bhttp
-request", a zero byte, <code>key_id</code> as an 8-bit integer, plus <code>kem_id</code>, <code>kdf_id</code>,
-and <code>aead_id</code> as three 16-bit integers.<a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-5.2-2.3">
-            <p id="section-5.2-2.3.1">Create a receiving HPKE context, <code>rctxt</code>, by invoking <code>SetupPSKR()</code>
-(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-5.1.2" class="relref">Section 5.1.2</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>)
-with <code>enc</code>, <code>skR</code>, <code>info</code>, <code>psk</code>,
-and a one byte pre-shared key ID containing <code>key_id</code>.<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li id="section-5.2-2.4">
-            <p id="section-5.2-2.4.1">Decrypt <code>ct</code> by invoking the <code>Open()</code> method on <code>rctxt</code>
-(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-5.2" class="relref">Section 5.2</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>),
-with an empty associated data <code>aad</code>,
-yielding <code>msg</code> or an error on failure.
-If an error is returned, the user agent discards the message.<a href="#section-5.2-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.2-2.2.1">Decrypt <code>ct</code> by invoking the <code>Open()</code> method on the AEAD
+associated with the <code>key</code>,
+passing <code>key</code>, <code>nonce, and an empty associated data,
+yielding </code>msg` or an error on failure.
+If an error is returned, the user agent discards the message.<a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-5.2-3">In pseudocode, this procedure is as follows:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <div class="lang-pseudocode sourcecode" id="section-5.2-4">
 <pre>
-key_id, kem_id, kdf_id, aead_id, enc, ct = parse(enc_request)
-info = concat(encode_str("message/bhttp request"),
-              encode(1, 0),
-              encode(1, key_id),
-              encode(2, kem_id),
-              encode(2, kdf_id),
-              encode(2, aead_id))
-rctxt = SetupBaseR(enc, skR, info, psk, [key_id])
-msg, error = rctxt.Open("", ct)
+key_id, nonce, ct = parse(enc_request)
+key, aead = find_key(key_id)
+if not key: abort
+if previously_seen(key_id, nonce):
+  delete(key)
+  abort
+msg, error = aead.Open(key, "", nonce, ct)
+if error: abort
 </pre><a href="#section-5.2-4" class="pilcrow">¶</a>
 </div>
 </section>
@@ -1649,18 +1557,7 @@ msg, error = rctxt.Open("", ct)
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-mandatory-algorithms" class="section-name selfRef">Mandatory Algorithms</a>
       </h2>
 <p id="section-6-1">All implementations of this specification <span class="bcp14">MUST</span> implement
-the following algorithms:<a href="#section-6-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6-2.1">
-          <p id="section-6-2.1.1">the MLKEM768-X25519 KEM (0x647a) <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-8.2" class="relref">Section 8.2</a> of [<a href="#HPKE-PQ" class="cite xref">HPKE-PQ</a>]</span><a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-6-2.2">
-          <p id="section-6-2.2.1">the TurboSHAKE128 KDF (0x0012) <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-5" class="relref">Section 5</a> of [<a href="#HPKE-PQ" class="cite xref">HPKE-PQ</a>]</span><a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-6-2.3">
-          <p id="section-6-2.3.1">the AES-GCM AEAD (0x0001) <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.3" class="relref">Section 7.3</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span><a href="#section-6-2.3.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
+AES-128-GCM, identified as 0x0001 in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-7.3" class="relref">Section 7.3</a> of [<a href="#HPKE" class="cite xref">HPKE</a>]</span>.<a href="#section-6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="upgrading-from-rfc-8291">
@@ -1678,8 +1575,16 @@ to indicate the use of this scheme.<a href="#section-7-1" class="pilcrow">¶</a>
 <p id="section-7-2">This document defines a media type
 for HPKE-protected push messages; see <a href="#iana" class="auto internal xref">Section 9</a>.
 This media type <span class="bcp14">MAY</span> be omitted if the "aes128gcm" content coding is not present.<a href="#section-7-2" class="pilcrow">¶</a></p>
-<p id="section-7-3">Unlike RFC 8291, no native padding facility is provided by this encryption format;
-see <a href="#security" class="auto internal xref">Section 8</a> for details.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-3">The use of post-quantum cryptography can increase the size of messages considerably.
+<span><a href="https://rfc-editor.org/rfc/rfc8291#section-4" class="relref">Section 4</a> of [<a href="#RFC8291" class="cite xref">RFC8291</a>]</span> recommends that push services support ciphertext
+of 4096 bytes.
+This can reduce the available space for plaintext considerably.
+For example, using MLKEM768-X25519 means 1143 bytes of cryptographic overhead,
+compared to the 103-byte overhead in RFC 8291.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4">Ideally, to allow for a smooth transition to PQ cryptography,
+push services would allow an additional 1kB for ciphertext.<a href="#section-7-4" class="pilcrow">¶</a></p>
+<p id="section-7-5">Unlike RFC 8291, no native padding facility is provided by this encryption format;
+see <a href="#security" class="auto internal xref">Section 8</a> for details.<a href="#section-7-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security">
@@ -1718,50 +1623,79 @@ which was able to use the padding provided by the <span>[<a href="#RFC8188" clas
 <p id="section-8-6">This document exercises the options described in <span>[<a href="#RFC8192" class="cite xref">RFC8192</a>]</span>
 for replacing the encryption scheme.
 Any replacement of this encryption scheme can use those same techniques.<a href="#section-8-6" class="pilcrow">¶</a></p>
-<div id="dos">
+<div id="pcs">
 <section id="section-8.1">
-        <h3 id="name-handling-denial-of-service">
-<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-handling-denial-of-service" class="section-name selfRef">Handling Denial of Service</a>
+        <h3 id="name-post-compromise-security">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-post-compromise-security" class="section-name selfRef">Post-Compromise Security</a>
         </h3>
-<p id="section-8.1-1">A user agent that receives multiple unwanted messages,
+<p id="section-8.1-1">This message encryption scheme does not provide confidentiality
+of messages that are sent after a key becomes compromised.
+A key compromise leads to loss of confidentiality
+for all messages sent under the same key,
+in the past or future.
+Knowledge of the key also grants the ability to forge arbitrary new messages.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="collision">
+<section id="section-8.2">
+        <h3 id="name-nonce-collisions">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-nonce-collisions" class="section-name selfRef">Nonce Collisions</a>
+        </h3>
+<p id="section-8.2-1">Protection of two different messages with an identical nonce
+leads to a key compromise in many AEAD functions.
+Applications <span class="bcp14">MUST</span> ensure that nonces used with the same key are unique.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">This document does not require that user agents track
+which nonces have been used,
+as that require significant state retention and computation.
+However, where a user agent detects nonce reuse
+it <span class="bcp14">MUST</span> discard the associated key.
+Messages that are merely replayed <span class="bcp14">MUST NOT</span> trigger this response.
+The user agent is encouraged to make all affected entities aware
+of the (potential) compromise of both previous and subsequent communications.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<p id="section-8.2-3">This document does not require the use of a nonce-reuse resistant AEAD,
+but one might be defined based on something like <span>[<a href="#AES-GCM-SIV" class="cite xref">AES-GCM-SIV</a>]</span>.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="overuse">
+<section id="section-8.3">
+        <h3 id="name-aead-overuse">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-aead-overuse" class="section-name selfRef">AEAD Overuse</a>
+        </h3>
+<p id="section-8.3-1">Overuse of an AEAD key can give an attacker additional advantages
+that might lead to loss of confidentiality
+or the ability to forge messages.
+The guidance in <span>[<a href="#AEAD-LIMITS" class="cite xref">AEAD-LIMITS</a>]</span>
+          <span class="bcp14">MUST</span> be followed with a target AEA advantage of 2<sup>-40</sup>,
+assuming that all messages are 4096 bytes.
+Application servers <span class="bcp14">MUST</span> refuse to send messages beyond the corresponding limits;
+user agents <span class="bcp14">MUST</span> discard keys after receiving that many messages.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dos">
+<section id="section-8.4">
+        <h3 id="name-handling-denial-of-service">
+<a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-handling-denial-of-service" class="section-name selfRef">Handling Denial of Service</a>
+        </h3>
+<p id="section-8.4-1">A user agent that receives multiple unwanted messages,
 including messages that are discarded,
 might be the target of a denial of service attack.
 Such an attack might seek to drain batteries
 by activating the device radio
-or by creating messages that cannot be decrypted.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
-<p id="section-8.1-2">A user agent can disable the associated subscription
-if they receive too many unwanted or invalid messages.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="proteus">
-<section id="section-8.2">
-        <h3 id="name-multi-target-ciphertexts-in">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-multi-target-ciphertexts-in" class="section-name selfRef">Multi-Target Ciphertexts in RFC 8291</a>
-        </h3>
-<p id="section-8.2-1">RFC 8291 <span>[<a href="#RFC8192" class="cite xref">RFC8192</a>]</span> is vulnerable to an attack
-where a malicious application can construct a single ciphertext
-that will be decrypted successfully
-(that is, the AEAD tag is accepted)
-by multiple recipients,
-each of whom can receive a different plaintext.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
-<p id="section-8.2-2">This format is also vulnerable to this attack.It is possible to apply the techniques from <span>[<a href="#CDJZ" class="cite xref">CDJZ</a>]</span>
-to achieve this outcome with only modest amounts of computation.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
-<p id="section-8.2-3">This attack has no practical consequence,
-as it requires that the attacker have information
-that would allow it to send any message
-without any need to a share a ciphertext.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+or by creating messages that cannot be decrypted.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
+<p id="section-8.4-2">A user agent can disable the associated subscription
+if they receive too many unwanted or invalid messages.<a href="#section-8.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-media">
-<section id="section-8.3">
+<section id="section-8.5">
         <h3 id="name-media-type-security">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-media-type-security" class="section-name selfRef">Media Type Security</a>
+<a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-media-type-security" class="section-name selfRef">Media Type Security</a>
         </h3>
-<p id="section-8.3-1">Push messages contain arbitrary content chosen by an application server.
+<p id="section-8.5-1">Push messages contain arbitrary content chosen by an application server.
 Though the format does not provide explicit signaling for the encapsulated media type,
 applications can include arbitrary data.
 How data is handled is determined by the application,
-which both sends and receives the data.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+which both sends and receives the data.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1802,7 +1736,7 @@ as defined in <a href="#message" class="auto internal xref">Section 5</a>.<a hre
         <dd class="break"></dd>
 <dt id="section-9-2.11">Security considerations:</dt>
         <dd style="margin-left: 1.5em" id="section-9-2.12">
-          <p id="section-9-2.12.1">see <a href="#sec-media" class="auto internal xref">Section 8.3</a><a href="#section-9-2.12.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.12.1">see <a href="#sec-media" class="auto internal xref">Section 8.5</a><a href="#section-9-2.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-9-2.13">Interoperability considerations:</dt>
@@ -1886,13 +1820,13 @@ as defined in <a href="#message" class="auto internal xref">Section 5</a>.<a hre
 <a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
+<dt id="AEAD-LIMITS">[AEAD-LIMITS]</dt>
+        <dd>
+<span class="refAuthor">Günther, F.</span>, <span class="refAuthor">Thomson, M.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Usage Limits on AEAD Algorithms"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-irtf-cfrg-aead-limits-11</span>, <time datetime="2025-12-04" class="refDate">4 December 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-aead-limits-11">https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-aead-limits-11</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="HPKE">[HPKE]</dt>
         <dd>
 <span class="refAuthor">Barnes, R.</span>, <span class="refAuthor">Bhargavan, K.</span>, <span class="refAuthor">Lipp, B.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Hybrid Public Key Encryption"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-hpke-hpke-04</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04">https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="HPKE-PQ">[HPKE-PQ]</dt>
-        <dd>
-<span class="refAuthor">Barnes, R.</span> and <span class="refAuthor">D. Connolly</span>, <span class="refTitle">"Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-hpke-pq-05</span>, <time datetime="2026-07-06" class="refDate">6 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05">https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
@@ -1919,17 +1853,13 @@ as defined in <a href="#message" class="auto internal xref">Section 5</a>.<a hre
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="AES-GCM-SIV">[AES-GCM-SIV]</dt>
+        <dd>
+<span class="refAuthor">Gueron, S.</span>, <span class="refAuthor">Langley, A.</span>, and <span class="refAuthor">Y. Lindell</span>, <span class="refTitle">"AES-GCM-SIV: Nonce Misuse-Resistant Authenticated Encryption"</span>, <span class="seriesInfo">RFC 8452</span>, <span class="seriesInfo">DOI 10.17487/RFC8452</span>, <time datetime="2019-04" class="refDate">April 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8452">https://www.rfc-editor.org/rfc/rfc8452</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="CDJZ">[CDJZ]</dt>
         <dd>
 <span class="refAuthor">Cremers, C.</span>, <span class="refAuthor">Dax, A.</span>, <span class="refAuthor">Jacomme, C.</span>, and <span class="refAuthor">M. Zhao</span>, <span class="refTitle">"Automated Analysis of Protocols that use Authenticated Encryption: How Subtle AEAD Differences can impact Protocol Security"</span>, <span class="seriesInfo">USENIX 2023</span>, <time datetime="2023-08" class="refDate">August 2023</time>. </dd>
-<dd class="break"></dd>
-<dt id="ECH">[ECH]</dt>
-        <dd>
-<span class="refAuthor">Rescorla, E.</span>, <span class="refAuthor">Oku, K.</span>, <span class="refAuthor">Sullivan, N.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"TLS Encrypted Client Hello"</span>, <span class="seriesInfo">RFC 9849</span>, <span class="seriesInfo">DOI 10.17487/RFC9849</span>, <time datetime="2026-03" class="refDate">March 2026</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9849">https://www.rfc-editor.org/rfc/rfc9849</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="OHTTP">[OHTTP]</dt>
-        <dd>
-<span class="refAuthor">Thomson, M.</span> and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Oblivious HTTP"</span>, <span class="seriesInfo">RFC 9458</span>, <span class="seriesInfo">DOI 10.17487/RFC9458</span>, <time datetime="2024-01" class="refDate">January 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9458">https://www.rfc-editor.org/rfc/rfc9458</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="PQC-GUIDE">[PQC-GUIDE]</dt>
         <dd>
@@ -1947,9 +1877,9 @@ as defined in <a href="#message" class="auto internal xref">Section 5</a>.<a hre
         <dd>
 <span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"Message Encryption for Web Push"</span>, <span class="seriesInfo">RFC 8291</span>, <span class="seriesInfo">DOI 10.17487/RFC8291</span>, <time datetime="2017-11" class="refDate">November 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8291">https://www.rfc-editor.org/rfc/rfc8291</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="WEBPUSH-SYM">[WEBPUSH-SYM]</dt>
+<dt id="WEBPUSH-HPKE">[WEBPUSH-HPKE]</dt>
       <dd>
-<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"WebPush Encryption using Symmetric Ciphers"</span>, <time datetime="2026-07" class="refDate">July 2026</time>. </dd>
+<span class="refAuthor">Thomson, M.</span>, <span class="refTitle">"WebPush Encryption using HPKE"</span>, <time datetime="2026-07" class="refDate">July 2026</time>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -1961,7 +1891,9 @@ as defined in <a href="#message" class="auto internal xref">Section 5</a>.<a hre
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">TODO<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">David Benjamin insisted that we attempt to use symmetric keys.
+This is because introducing a scheme that provides post-compromise security,
+such as the one in <span>[<a href="#WEBPUSH-HPKE" class="cite xref">WEBPUSH-HPKE</a>]</span> is somewhat more inefficient than this scheme.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">
