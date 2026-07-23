@@ -1,7 +1,7 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-07-21T02:41:02.794326+00:00",
-  "repo": "martinthomson/webpush-hpke",
+  "timestamp": "2026-07-23T02:44:09.816802+00:00",
+  "repo": "martinthomson/webpush-pq",
   "labels": [
     {
       "name": "bug",
